@@ -1,0 +1,705 @@
+/* ---------------------------------------------------------
+   Design tokens
+   Palette is built around a dark "exchange board" feel:
+   green/red carry real meaning (gain/loss), gold is the one
+   decorative accent (ticker-tape brass).
+--------------------------------------------------------- */
+:root {
+  --bg: #0e1420;
+  --surface: #161d2c;
+  --surface-raised: #1c2438;
+  --border: rgba(237, 239, 244, 0.08);
+  --text: #edeff4;
+  --text-muted: #8891a6;
+  --gain: #3ddc97;
+  --loss: #ff6b6b;
+  --accent: #e8b24d;
+  --accent-dark: #0e1420;
+
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  --font-sans: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --radius: 10px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 48px 20px;
+  background: var(--bg);
+  background-image: radial-gradient(circle at 50% 0%, #131a29 0%, #0e1420 55%),
+    radial-gradient(circle at 100% 100%, rgba(232, 178, 77, 0.05) 0%, transparent 45%);
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+.app {
+  width: 100%;
+  max-width: 480px;
+}
+
+/* ---------------------------------------------------------
+   Header
+--------------------------------------------------------- */
+.app-header {
+  margin-bottom: 24px;
+}
+
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gain);
+  box-shadow: 0 0 0 0 rgba(61, 220, 151, 0.5);
+  animation: pulse 2.2s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(61, 220, 151, 0.45);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(61, 220, 151, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(61, 220, 151, 0);
+  }
+}
+
+.app-header h1 {
+  margin: 0 0 8px;
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.subhead {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------
+   Search card
+--------------------------------------------------------- */
+.search-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--surface-raised), var(--surface));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 16px 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 24px 48px -28px rgba(0, 0, 0, 0.6);
+}
+
+.search-card::before,
+.result-card::before,
+.empty-state::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--loss), var(--text-muted), var(--gain));
+  opacity: 0.55;
+}
+
+.search-row {
+  display: flex;
+  gap: 8px;
+}
+
+#ticker-input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+input {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+input::placeholder {
+  color: var(--text-muted);
+}
+
+input:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 14px;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+#search-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 18px;
+  background: var(--accent);
+  color: var(--accent-dark);
+  white-space: nowrap;
+  box-shadow: 0 6px 16px -8px rgba(232, 178, 77, 0.4);
+}
+
+#search-button svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+#search-button:hover:not(:disabled) {
+  opacity: 0.92;
+  box-shadow: 0 8px 18px -8px rgba(232, 178, 77, 0.5);
+}
+
+#search-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+#search-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.key-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.key-row label {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+#api-key-input {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+}
+
+.key-row a {
+  font-size: 12px;
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.key-row a:hover {
+  text-decoration: underline;
+}
+
+.key-note {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.key-note code {
+  font-family: var(--font-mono);
+  color: var(--text);
+}
+
+.chips-block {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.chips-label {
+  margin: 0 0 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  padding: 5px 11px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  transition: color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.chip:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.chip:active {
+  transform: scale(0.96);
+}
+
+.chip:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------
+   Result card
+--------------------------------------------------------- */
+.result-card {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--surface-raised), var(--surface));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 20px 20px;
+  box-shadow: 0 32px 64px -32px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.result-card:not([hidden]),
+.error-card:not([hidden]) {
+  animation: fadeSlideUp 0.35s ease both;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+}
+
+.symbol {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+  padding-top: 6px;
+}
+
+.price-block {
+  text-align: right;
+}
+
+.price {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 34px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  transition: text-shadow 0.3s ease;
+}
+
+.price.positive {
+  text-shadow: 0 0 22px rgba(61, 220, 151, 0.18);
+}
+
+.price.negative {
+  text-shadow: 0 0 22px rgba(255, 107, 107, 0.16);
+}
+
+.change-pill {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.change-pill.positive {
+  color: var(--gain);
+  background: rgba(61, 220, 151, 0.12);
+}
+
+.change-pill.negative {
+  color: var(--loss);
+  background: rgba(255, 107, 107, 0.12);
+}
+
+.section-label {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* 30-day sparkline, built from the same daily-close data used for the SMA */
+.sparkline-section {
+  margin-bottom: 18px;
+}
+
+.sparkline-container {
+  width: 100%;
+  height: 56px;
+}
+
+.sparkline-container svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.sparkline.positive {
+  color: var(--gain);
+}
+
+.sparkline.negative {
+  color: var(--loss);
+}
+
+.sparkline-empty {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* 52-week range: the signature "ticker tape" gauge */
+.range-section {
+  margin-bottom: 20px;
+}
+
+.range-bar {
+  position: relative;
+  height: 4px;
+  margin: 12px 4px 8px;
+}
+
+.range-track {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, var(--loss), var(--text-muted), var(--gain));
+  opacity: 0.35;
+  border-radius: 999px;
+}
+
+.range-marker {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  border: 2px solid var(--bg);
+  border-radius: 2px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  transition: left 0.4s ease;
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+
+.stat-value {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.stat-value.positive {
+  color: var(--gain);
+}
+
+.stat-value.negative {
+  color: var(--loss);
+}
+
+.meta {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------
+   Empty state
+--------------------------------------------------------- */
+.empty-state {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--surface-raised), var(--surface));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 96px;
+  height: 48px;
+  margin-bottom: 14px;
+}
+
+.bar-muted {
+  fill: var(--text-muted);
+  opacity: 0.45;
+}
+
+.bar-loss {
+  fill: var(--loss);
+  opacity: 0.6;
+}
+
+.bar-gain {
+  fill: var(--gain);
+  opacity: 0.65;
+}
+
+.wick-muted {
+  stroke: var(--text-muted);
+  opacity: 0.35;
+}
+
+.wick-loss {
+  stroke: var(--loss);
+  opacity: 0.45;
+}
+
+.wick-gain {
+  stroke: var(--gain);
+  opacity: 0.5;
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-muted);
+  max-width: 260px;
+  margin-inline: auto;
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------
+   Loading skeleton
+--------------------------------------------------------- */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.skel-line {
+  background: linear-gradient(
+    90deg,
+    var(--surface-raised) 25%,
+    rgba(255, 255, 255, 0.06) 50%,
+    var(--surface-raised) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.skel-line--lg {
+  height: 32px;
+  width: 60%;
+}
+
+.skel-line--md {
+  height: 16px;
+  width: 40%;
+}
+
+.skel-line--bar {
+  height: 4px;
+  width: 100%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skel-line,
+  .live-dot {
+    animation: none;
+  }
+  .range-marker,
+  .price {
+    transition: none;
+  }
+  .result-card:not([hidden]),
+  .error-card:not([hidden]) {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------
+   Error card
+--------------------------------------------------------- */
+.error-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text-muted);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+}
+
+.error-card.network {
+  border-left-color: var(--text-muted);
+}
+
+.error-card.ticker {
+  border-left-color: var(--loss);
+}
+
+.error-card.rate-limit {
+  border-left-color: var(--accent);
+}
+
+.error-title {
+  margin: 0 0 4px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.error-message {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.error-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ---------------------------------------------------------
+   Footer
+--------------------------------------------------------- */
+.app-footer {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.app-footer p {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* ---------------------------------------------------------
+   Responsive
+--------------------------------------------------------- */
+@media (max-width: 420px) {
+  body {
+    padding: 32px 14px;
+  }
+
+  .search-row {
+    flex-direction: column;
+  }
+
+  #search-button {
+    padding: 10px;
+  }
+
+  .key-row {
+    flex-wrap: wrap;
+  }
+
+  .price {
+    font-size: 26px;
+  }
+}

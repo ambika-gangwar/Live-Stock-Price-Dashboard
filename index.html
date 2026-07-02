@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Live stock quotes, 52-week range, and 10-day moving average, powered by the Alpha Vantage API." />
+  <title>Stock Dashboard</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1420'/%3E%3Cpolyline points='6,22 12,15 17,19 26,8' fill='none' stroke='%233ddc97' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpolyline points='20,8 26,8 26,14' fill='none' stroke='%233ddc97' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="app">
+    <header class="app-header">
+      <p class="eyebrow"><span class="live-dot" aria-hidden="true"></span>Live market data</p>
+      <h1>Stock Dashboard</h1>
+      <p class="subhead">Look up a ticker for its current price, 52-week range, and 10-day moving average.</p>
+    </header>
+
+    <form id="search-form" class="search-card" autocomplete="off">
+      <div class="search-row">
+        <label for="ticker-input" class="visually-hidden">Ticker symbol</label>
+        <input
+          id="ticker-input"
+          name="ticker"
+          type="text"
+          placeholder="e.g. AAPL"
+          maxlength="10"
+          required
+        />
+        <button id="search-button" type="submit">
+          <svg viewBox="0 0 16 16" fill="none" aria-hidden="true">
+            <circle cx="7" cy="7" r="5" stroke="currentColor" stroke-width="1.6" />
+            <line x1="10.8" y1="10.8" x2="14.5" y2="14.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+          </svg>
+          Look up
+        </button>
+      </div>
+
+      <div class="key-row">
+        <label for="api-key-input">PHO2XQS6BNTK7JKC</label>
+        <input
+          id="api-key-input"
+          name="apiKey"
+          type="password"
+          placeholder="Uses config.js by default"
+        />
+        <a href="https://www.alphavantage.co/support/#api-key" target="_blank" rel="noopener noreferrer">
+          Get a free key ↗
+        </a>
+      </div>
+      <p class="key-note">
+        This field is optional and never saved &mdash; it only overrides <code>config.js</code> for this session.
+      </p>
+
+      <div class="chips-block">
+        <p class="chips-label">Try</p>
+        <div class="chips" role="group" aria-label="Quick search">
+          <button type="button" class="chip" data-symbol="AAPL">AAPL</button>
+          <button type="button" class="chip" data-symbol="MSFT">MSFT</button>
+          <button type="button" class="chip" data-symbol="GOOGL">GOOGL</button>
+          <button type="button" class="chip" data-symbol="AMZN">AMZN</button>
+          <button type="button" class="chip" data-symbol="NVDA">NVDA</button>
+          <button type="button" class="chip" data-symbol="TSLA">TSLA</button>
+        </div>
+      </div>
+    </form>
+
+    <section id="result-section" aria-live="polite">
+      <!-- Empty state, shown until the first search -->
+      <div id="empty-state" class="empty-state">
+        <svg class="empty-icon" viewBox="0 0 120 60" aria-hidden="true">
+          <line x1="10" y1="8" x2="10" y2="52" class="wick-muted" stroke-width="1.5" />
+          <rect x="5" y="26" width="10" height="16" rx="1.5" class="bar-muted" />
+
+          <line x1="32" y1="4" x2="32" y2="48" class="wick-loss" stroke-width="1.5" />
+          <rect x="27" y="16" width="10" height="22" rx="1.5" class="bar-loss" />
+
+          <line x1="54" y1="14" x2="54" y2="56" class="wick-muted" stroke-width="1.5" />
+          <rect x="49" y="30" width="10" height="14" rx="1.5" class="bar-muted" />
+
+          <line x1="76" y1="2" x2="76" y2="40" class="wick-gain" stroke-width="1.5" />
+          <rect x="71" y="8" width="10" height="20" rx="1.5" class="bar-gain" />
+
+          <line x1="98" y1="6" x2="98" y2="44" class="wick-gain" stroke-width="1.5" />
+          <rect x="93" y="10" width="10" height="24" rx="1.5" class="bar-gain" />
+        </svg>
+        <p>Search a ticker above to see its live price, 52-week range, and trend.</p>
+      </div>
+
+      <!-- Loading skeleton -->
+      <div id="skeleton" class="result-card skeleton" hidden>
+        <div class="skel-line skel-line--lg"></div>
+        <div class="skel-line skel-line--md"></div>
+        <div class="skel-line skel-line--bar"></div>
+        <div class="skel-line skel-line--md"></div>
+      </div>
+
+      <!-- Error card -->
+      <div id="error-card" class="error-card" hidden role="alert">
+        <p class="error-title" id="error-title"></p>
+        <p class="error-message" id="error-message"></p>
+        <p class="error-hint" id="error-hint"></p>
+      </div>
+
+      <!-- Result card -->
+      <div id="result-card" class="result-card" hidden>
+        <div class="result-header">
+          <span id="result-symbol" class="symbol"></span>
+          <div class="price-block">
+            <span id="result-price" class="price"></span>
+            <span id="result-change" class="change-pill"></span>
+          </div>
+        </div>
+
+        <div class="sparkline-section">
+          <p class="section-label">30-day trend</p>
+          <div id="sparkline-container" class="sparkline-container"></div>
+        </div>
+
+        <div class="range-section">
+          <p class="section-label">52-week range</p>
+          <div class="range-bar">
+            <div class="range-track"></div>
+            <div id="range-marker" class="range-marker"></div>
+          </div>
+          <div class="range-labels">
+            <span id="range-low"></span>
+            <span id="range-high"></span>
+          </div>
+        </div>
+
+        <div class="stats-row">
+          <div class="stat">
+            <p class="section-label">10-day SMA</p>
+            <p id="result-sma" class="stat-value"></p>
+          </div>
+          <div class="stat">
+            <p class="section-label">Trend</p>
+            <p id="result-trend" class="stat-value"></p>
+          </div>
+        </div>
+
+        <p id="result-meta" class="meta"></p>
+      </div>
+    </section>
+
+    <footer class="app-footer">
+      <p>Data from Alpha Vantage. Free-tier keys are capped at a few requests per minute.</p>
+    </footer>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="script.js" defer></script>
+</body>
+</html>
